@@ -1,12 +1,12 @@
 --[[ 
-Auto Rejoin XENO - The Forge Edition (CORRIGIDO V6) 
+Auto Rejoin XENO - The Forge Edition (CORRIGIDO V7) 
 - Sistema de configuração persistente entre mundos 
 - Auto-execute 100% funcional 
 - Detecção automática inteligente 
 - Reduzidos delays para maior confiabilidade em TPs rápidos 
 - Injeção early em Mundo 1 para evitar falhas 
 - Correções para consistência na GUI e injeção 
-- URL atualizada conforme solicitado 
+- URL atualizada para o GitHub raw estável 
 - Aumentado threshold de rejoin para 5 min (300s) para evitar "rejoin antigo" 
 - Mais debug para rastrear salvamento de tempo 
 ]] 
@@ -19,7 +19,7 @@ local LocalPlayer = Players.LocalPlayer
 
 -- Configurações 
 local CONFIG_FILE = "XenoForgeConfig.json" 
-local SCRIPT_URL = "https://pastefy.app/2HaiDt8V/raw" -- URL atualizada 
+local SCRIPT_URL = "https://raw.githubusercontent.com/enzogabrielcastrodejesus903-png/dedeu/refs/heads/main/dede.lua" -- URL GitHub raw estável 
 
 -- IDs dos Mundos (CONFIGURADOS!) 
 local MUNDO_1_ID = 76558904092080 
