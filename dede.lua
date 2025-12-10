@@ -1,5 +1,5 @@
 --[[
-Auto Rejoin XENO - The Forge Edition (CORRIGIDO V8)
+Auto Rejoin XENO - The Forge Edition (CORRIGIDO V9)
 - Sistema de configuração persistente entre mundos
 - Auto-execute 100% funcional
 - Detecção automática inteligente
@@ -10,7 +10,13 @@ Auto Rejoin XENO - The Forge Edition (CORRIGIDO V8)
 - Aumentado threshold de rejoin para 10 min (600s) para mais folga em loads lentos
 - Adicionado mais delay e debug no auto-start para garantir atualização da GUI e timer
 - Removida verificação de "rejoin muito antigo" para sempre reativar se IsEnabled
+- Adicionado guarda global para prevenir execuções múltiplas
+- Removida re-injeção periódica no timer para evitar injeções múltiplas
+- Removidas notificações desnecessárias para reduzir spam
 ]]
+if _G.XenoForgeLoaded then return end
+_G.XenoForgeLoaded = true
+
 local Players = game:GetService("Players")
 local TeleportService = game:GetService("TeleportService")
 local CoreGui = game:GetService("CoreGui")
@@ -86,20 +92,7 @@ local function InjectScript()
             return true
         end)
         
-        -- Notificação de status
-        if success and result then
-            game:GetService("StarterGui"):SetCore("SendNotification", {
-                Title = "✅ Xeno Loop",
-                Text = "Script executado automaticamente!",
-                Duration = 5
-            })
-        elseif not success then
-            game:GetService("StarterGui"):SetCore("SendNotification", {
-                Title = "❌ Xeno Loop",
-                Text = "Erro: " .. tostring(result),
-                Duration = 8
-            })
-        end
+        -- Removida notificação para evitar spam
     ]], SCRIPT_URL)
     
     -- Tenta múltiplas injeções para garantir
@@ -130,12 +123,7 @@ if earlyConfig.IsEnabled and earlyConfig.LastRejoinTime then
     if timeSinceRejoin < 600 and earlyWorld == 1 then -- Aumentado para 600s (10 min)
         -- Injeção early para TP rápido
         InjectScript()
-        -- Notificação minimal
-        game:GetService("StarterGui"):SetCore("SendNotification", {
-            Title = "🔄 Xeno Loop",
-            Text = "Preparando para Mundo 2...",
-            Duration = 10
-        })
+        -- Removida notificação para evitar spam
     end
 end
 -- === GUI ===
@@ -347,10 +335,7 @@ local function StartTimer(minutes)
             local secs = seconds % 60
             StatusLabel.Text = string.format("⏳ Rejoin em: %02d:%02d", mins, secs)
             print("⏳ [DEBUG] Countdown: " .. mins .. ":" .. secs)
-            -- Re-injeta a cada 15 segundos
-            if seconds % 15 == 0 then
-                InjectScript()
-            end
+            -- Removida re-injeção periódica para evitar múltiplas injeções
             task.wait(1)
             seconds = seconds - 1
         end
@@ -471,11 +456,7 @@ task.spawn(function()
     -- Verifica se a config está ativada (ignora idade do rejoin)
     if config.IsEnabled then
         StatusLabel.Text = "🔄 Carregando configuração persistente..."
-        game:GetService("StarterGui"):SetCore("SendNotification", {
-            Title = "🔄 Xeno Detectou Config Ativa!",
-            Text = "Aguardando mundo correto...",
-            Duration = 5
-        })
+        -- Removida notificação para evitar spam
         -- Se está no Mundo 1, aguarda TP pro Mundo 2
         if mundo == 1 then
             StatusLabel.Text = "⏳ Aguardando TP automático Mundo 1→2..."
@@ -500,11 +481,7 @@ task.spawn(function()
             print("✅ [DEBUG] Definindo TimeInput para " .. minutes .. " minutos")
             print("✅ [DEBUG] Reativando timer com " .. minutes .. " minutos")
             StartTimer(minutes)
-            game:GetService("StarterGui"):SetCore("SendNotification", {
-                Title = "✅ Loop Reativado!",
-                Text = "Rejoin em " .. minutes .. " minutos",
-                Duration = 5
-            })
+            -- Removida notificação para evitar spam
         else
             StatusLabel.Text = "⚠️ Não chegou ao Mundo 2\nReative manualmente"
             game:GetService("StarterGui"):SetCore("SendNotification", {
@@ -533,9 +510,4 @@ task.spawn(function()
         })
     end
 end)
--- Notificação inicial
-game:GetService("StarterGui"):SetCore("SendNotification", {
-    Title = "🔄 Xeno Forge Loop",
-    Text = "Carregado! Mundo: " .. (currentWorld or "?"),
-    Duration = 5
-})
+-- Removida notificação inicial para evitar spam
