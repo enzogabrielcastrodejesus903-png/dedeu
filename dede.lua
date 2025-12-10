@@ -1,5 +1,5 @@
 --[[ 
-Auto Rejoin XENO - The Forge Edition (CORRIGIDO V7) 
+Auto Rejoin XENO - The Forge Edition (CORRIGIDO V8) 
 - Sistema de configuração persistente entre mundos 
 - Auto-execute 100% funcional 
 - Detecção automática inteligente 
@@ -7,8 +7,8 @@ Auto Rejoin XENO - The Forge Edition (CORRIGIDO V7)
 - Injeção early em Mundo 1 para evitar falhas 
 - Correções para consistência na GUI e injeção 
 - URL atualizada para o GitHub raw estável 
-- Aumentado threshold de rejoin para 5 min (300s) para evitar "rejoin antigo" 
-- Mais debug para rastrear salvamento de tempo 
+- Aumentado threshold de rejoin para 10 min (600s) para mais folga em loads lentos 
+- Adicionado mais delay e debug no auto-start para garantir atualização da GUI e timer 
 ]] 
 
 local Players = game:GetService("Players") 
@@ -67,7 +67,7 @@ local function InjectScript()
     local code = string.format([[ 
         -- XENO AUTO-EXECUTE INJECTION 
         repeat task.wait() until game:IsLoaded() 
-        task.wait(0.5) -- Delay reduzido para carregamento rápido 
+        task.wait(1) -- Aumentado delay para carregamento mais seguro 
         
         local success, result = pcall(function() 
             -- Verifica se o arquivo de config existe 
@@ -86,7 +86,7 @@ local function InjectScript()
             end 
             
             -- EXECUTA O SCRIPT 
-            task.wait(0.5) 
+            task.wait(1) 
             local scriptCode = game:HttpGet("%s", true) 
             loadstring(scriptCode)() 
             return true 
@@ -135,7 +135,7 @@ end
 
 if earlyConfig.IsEnabled and earlyConfig.LastRejoinTime then 
     local timeSinceRejoin = os.time() - earlyConfig.LastRejoinTime 
-    if timeSinceRejoin < 300 and earlyWorld == 1 then  -- Aumentado para 300s (5 min)
+    if timeSinceRejoin < 600 and earlyWorld == 1 then  -- Aumentado para 600s (10 min)
         -- Injeção early para TP rápido 
         InjectScript() 
         -- Notificação minimal 
@@ -360,6 +360,7 @@ local function PerformRejoin()
 end 
 
 local function StartTimer(minutes) 
+    print("✅ [DEBUG] Iniciando StartTimer com " .. minutes .. " minutos") 
     if countdownTask then 
         task.cancel(countdownTask) 
     end 
@@ -378,6 +379,7 @@ local function StartTimer(minutes)
             local mins = math.floor(seconds / 60) 
             local secs = seconds % 60 
             StatusLabel.Text = string.format("⏳ Rejoin em: %02d:%02d", mins, secs) 
+            print("⏳ [DEBUG] Countdown: " .. mins .. ":" .. secs) 
             -- Re-injeta a cada 15 segundos 
             if seconds % 15 == 0 then 
                 InjectScript() 
@@ -486,7 +488,7 @@ end)
 
 -- === AUTO-START INTELIGENTE === 
 task.spawn(function() 
-    task.wait(0.5) -- Delay reduzido 
+    task.wait(1) -- Aumentado delay para garantir que GUI carregue 
     -- Detecta mundo atual 
     local mundo = DetectWorld() 
     -- Carrega configuração 
@@ -511,8 +513,8 @@ task.spawn(function()
     if config.IsEnabled and config.LastRejoinTime then 
         local timeSinceRejoin = os.time() - config.LastRejoinTime 
         print("🔍 [DEBUG] Tempo desde último rejoin:", timeSinceRejoin, "segundos") 
-        -- Se foi há menos de 5 minutos, é um rejoin 
-        if timeSinceRejoin < 300 then 
+        -- Se foi há menos de 10 minutos, é um rejoin 
+        if timeSinceRejoin < 600 then 
             StatusLabel.Text = "🔄 Retornando de rejoin..." 
             game:GetService("StarterGui"):SetCore("SendNotification", { 
                 Title = "🔄 Xeno Detectou Rejoin!", 
@@ -525,7 +527,7 @@ task.spawn(function()
                 -- Injeção já feita early, mas re-injeta por segurança 
                 InjectScript() 
                 local waited = 0 
-                local maxWait = 15 -- Reduzido para evitar delays longos 
+                local maxWait = 20 -- Aumentado para 20s 
                 while game.PlaceId == MUNDO_1_ID and waited < maxWait do 
                     task.wait(1) 
                     waited = waited + 1 
@@ -537,10 +539,11 @@ task.spawn(function()
             -- Se chegou no Mundo 2, reativa o loop 
             if mundo == 2 then 
                 StatusLabel.Text = "✅ De volta ao Mundo 2!" 
-                task.wait(1) 
+                task.wait(2) -- Delay extra para garantir atualização da GUI 
                 local minutes = config.TimeMinutes or 40 
                 TimeInput.Text = tostring(minutes) 
-                print("✅ [DEBUG] Reativando timer com", minutes, "minutos") 
+                print("✅ [DEBUG] Definindo TimeInput para " .. minutes .. " minutos") 
+                print("✅ [DEBUG] Reativando timer com " .. minutes .. " minutos") 
                 StartTimer(minutes) 
                 game:GetService("StarterGui"):SetCore("SendNotification", { 
                     Title = "✅ Loop Reativado!", 
